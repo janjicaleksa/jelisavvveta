@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>jelisavvveta</title>
+    <link rel="icon" type="image/png" href="data/thumbnail.png" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body class="intro-lock">
+    <div class="overlay" aria-hidden="false">
+      <a id="contact-label" class="home-word">contact</a>
+      <h1 id="brand" aria-label="jelisavvveta"></h1>
+      <div id="label-arch" class="column-label">architecture</div>
+      <div id="label-photo" class="column-label">photography</div>
+      <div id="cursor-mark" class="cursor-mark" aria-hidden="true">
+        <img src="data/kursor.png" alt="" />
+      </div>
+    </div>
+
+    <main>
+      <section id="home" class="page" aria-label="Home"></section>
+
+      <section id="gallery" class="page" aria-label="Gallery">
+        <div class="columns">
+          <div class="col col-arch">
+            <div class="gallery" id="gallery-arch"></div>
+            <a class="portfolio-cta cta-arch" id="cta-arch" role="link" tabindex="0">
+              <span class="cta-text">click here for the portfolio</span>
+              <svg class="cta-arrow" viewBox="8 38 128 62" aria-hidden="true" focusable="false">
+                <path class="arrow-shaft" d="M 130 95 L 85 95 L 22 48" />
+                <path class="arrow-head" d="M 40 47 L 14 44 L 23 70" />
+              </svg>
+            </a>
+          </div>
+          <div class="col col-photo">
+            <div class="gallery" id="gallery-photo"></div>
+            <a class="portfolio-cta cta-photo" id="cta-photo" role="link" tabindex="0">
+              <svg class="cta-arrow" viewBox="8 38 128 62" aria-hidden="true" focusable="false">
+                <path class="arrow-shaft" d="M 130 95 L 85 95 L 22 48" />
+                <path class="arrow-head" d="M 40 47 L 14 44 L 23 70" />
+              </svg>
+              <span class="cta-text">click here for the portfolio</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section id="services" class="page" aria-label="Services">
+        <div class="services-inner">
+          <h2 class="services-heading">ways we can work together</h2>
+          <div class="columns services-columns">
+            <div class="col col-arch">
+              <ul class="services-list" id="services-arch" data-services="architecture"></ul>
+            </div>
+            <div class="col col-photo">
+              <ul class="services-list" id="services-photo" data-services="photography"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" class="page" aria-label="Contact">
+        <div class="contact-inner">
+          <div class="contact-headline">
+            <figure id="contact-photo" class="contact-photo">
+              <img alt="" />
+            </figure>
+            <h2 id="contact-heading"></h2>
+          </div>
+          <div id="contact-links" class="contact-grid"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>
