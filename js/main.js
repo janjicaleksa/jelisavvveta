@@ -384,35 +384,59 @@
     }
   }
 
-  function loadUntilMissing(folder, max) {
-    return new Promise(function (resolve) {
-      var found = [];
-      var index = 1;
+  // Discovers 01.jpg, 02.jpg, … in a folder and hands each loaded image
+  // element to onImage in order, as soon as it has arrived. The first
+  // file is fetched on its own so it gets the whole connection; after
+  // that a few requests run side by side. Discovery stops at the first
+  // missing number (or at max).
+  function loadImages(folder, max, onImage) {
+    var PARALLEL = 3;
+    var loaded = {};
+    var nextToRequest = 1;
+    var nextToEmit = 1;
+    var stopAt = Infinity;
+    var inFlight = 0;
 
-      function padded(n) {
-        return n < 10 ? "0" + n : String(n);
+    function padded(n) {
+      return n < 10 ? "0" + n : String(n);
+    }
+
+    function emit() {
+      while (nextToEmit < stopAt && loaded[nextToEmit]) {
+        var img = loaded[nextToEmit];
+        delete loaded[nextToEmit];
+        nextToEmit += 1;
+        onImage(img);
       }
+    }
 
-      function next() {
-        if (index > max) {
-          resolve(found);
-          return;
-        }
-        var src = folder + "/" + padded(index) + ".jpg";
-        var probe = new Image();
-        probe.onload = function () {
-          found.push(src);
-          index += 1;
-          next();
-        };
-        probe.onerror = function () {
-          resolve(found);
-        };
-        probe.src = src;
+    function probe(index) {
+      var img = new Image();
+      img.alt = "";
+      img.decoding = "async";
+      inFlight += 1;
+      img.onload = function () {
+        inFlight -= 1;
+        loaded[index] = img;
+        emit();
+        request();
+      };
+      img.onerror = function () {
+        inFlight -= 1;
+        stopAt = Math.min(stopAt, index);
+      };
+      img.src = folder + "/" + padded(index) + ".jpg";
+    }
+
+    function request() {
+      var limit = nextToEmit > 1 ? PARALLEL : 1;
+      while (inFlight < limit && nextToRequest <= max && nextToRequest < stopAt) {
+        probe(nextToRequest);
+        nextToRequest += 1;
       }
+    }
 
-      next();
-    });
+    request();
   }
 
   function openPdf(pdfPath) {
@@ -432,44 +456,29 @@
     });
   }
 
-  function fillGallery(el, cta, sources, pdfPath) {
-    el.querySelectorAll("img").forEach(function (old) {
-      old.remove();
-    });
-    sources.forEach(function (src) {
-      var img = document.createElement("img");
-      img.src = src;
-      img.alt = "";
-      el.appendChild(img);
-    });
-    if (pdfPath) {
-      if (sources.length) {
-        el.classList.add("is-clickable");
-        el.addEventListener("click", function () {
-          openPdf(pdfPath);
-        });
-      }
-      bindCta(cta, pdfPath);
-    }
-  }
-
-  // Steps a class through a list of elements on a fixed beat.
+  // Steps a class through a list of elements on a fixed beat. `items` may
+  // be a live collection that grows while the beat is running. Returns a
+  // function to call when new items arrive: if the beat is already
+  // running but had nothing to show yet, it shows the first item at once.
   function cycleClass(items, className, startDelay, interval) {
-    if (!items.length) {
-      return;
-    }
-    var current = 0;
+    var current = -1;
+    var running = false;
 
-    function start() {
-      items[0].classList.add(className);
-      if (items.length < 2) {
+    function step() {
+      if (!items.length) {
         return;
       }
-      setInterval(function () {
+      if (current >= 0 && items[current]) {
         items[current].classList.remove(className);
-        current = (current + 1) % items.length;
-        items[current].classList.add(className);
-      }, interval);
+      }
+      current = (current + 1) % items.length;
+      items[current].classList.add(className);
+    }
+
+    function start() {
+      running = true;
+      step();
+      setInterval(step, interval);
     }
 
     if (startDelay > 0) {
@@ -477,10 +486,12 @@
     } else {
       start();
     }
-  }
 
-  function cycleGallery(el, startDelay, interval) {
-    cycleClass(el.querySelectorAll("img"), "is-active", startDelay, interval);
+    return function () {
+      if (running && current < 0) {
+        step();
+      }
+    };
   }
 
   function cyclePhrases(list, startDelay, interval) {
@@ -511,6 +522,10 @@
     observer.observe(servicesSection);
   }
 
+  // Called as soon as the script runs, so the image downloads overlap the
+  // intro instead of starting after it. Each picture is dropped into its
+  // frame the moment it has loaded; the reels start when the gallery
+  // scrolls into view and pick up pictures that are still arriving.
   function setupGalleries() {
     var gallery = SITE.gallery || {};
     var interval = gallery.intervalMs || 1000;
@@ -523,30 +538,53 @@
       galleryPhoto.classList.add("is-animated");
     }
 
-    Promise.all([
-      loadUntilMissing("data/arch", max),
-      loadUntilMissing("data/photo", max),
-    ]).then(function (results) {
-      fillGallery(galleryArch, ctaArch, results[0], PDF_ARCH);
-      fillGallery(galleryPhoto, ctaPhoto, results[1], PDF_PHOTO);
+    var reels = [
+      { el: galleryArch, cta: ctaArch, folder: "data/arch", pdf: PDF_ARCH, delay: 0 },
+      { el: galleryPhoto, cta: ctaPhoto, folder: "data/photo", pdf: PDF_PHOTO, delay: offset },
+    ];
 
-      var observer = new IntersectionObserver(
-        function (entries) {
-          entries.forEach(function (entry) {
-            if (!entry.isIntersecting || started) {
-              return;
-            }
-            started = true;
-            cycleGallery(galleryArch, 0, interval);
-            cycleGallery(galleryPhoto, offset, interval);
-            observer.disconnect();
+    reels.forEach(function (reel) {
+      reel.refresh = null;
+      bindCta(reel.cta, reel.pdf);
+      reel.el.querySelectorAll("img").forEach(function (old) {
+        old.remove();
+      });
+      loadImages(reel.folder, max, function (img) {
+        if (!reel.el.classList.contains("is-clickable")) {
+          reel.el.classList.add("is-clickable");
+          reel.el.addEventListener("click", function () {
+            openPdf(reel.pdf);
           });
-        },
-        { threshold: 0.35 }
-      );
-
-      observer.observe(gallerySection);
+        }
+        reel.el.appendChild(img);
+        if (reel.refresh) {
+          reel.refresh();
+        }
+      });
     });
+
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting || started) {
+            return;
+          }
+          started = true;
+          reels.forEach(function (reel) {
+            reel.refresh = cycleClass(
+              reel.el.getElementsByTagName("img"),
+              "is-active",
+              reel.delay,
+              interval
+            );
+          });
+          observer.disconnect();
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(gallerySection);
   }
 
   function bindHomeLinks() {
@@ -631,12 +669,12 @@
     }
     bindScroll();
     onScroll();
-    setupGalleries();
     setupServices();
   }
 
   applyConfig();
   bindHomeLinks();
+  setupGalleries();
   layoutLabels(0, 0, 0, false);
   setBrandShortcut(false);
 
