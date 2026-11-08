@@ -74,8 +74,13 @@
   --fg: #000;
   /* web-safe dark red, used for every red word and border on the site */
   --accent: #990000;
-  --cursor: url("../data/kursor.png") 0 0, auto;
-  --cursor-click: url("../data/kursor.png") 0 0, pointer;
+  /*
+   * kursor.png is a 32x32 crosshair; "16 16" puts the click point on the
+   * center of the cross (the default "0 0" is its top-left corner, which
+   * makes small links like the red words at the top miss by 16px).
+   */
+  --cursor: url("../data/kursor.png") 16 16, auto;
+  --cursor-click: url("../data/kursor.png") 16 16, pointer;
 }
 
 html[data-font="helvetica"] {
@@ -289,7 +294,8 @@ a:hover {
  * Slideshow frame. Always a square, as wide as the column allows but
  * never taller than 62vh, centered in its column. The pictures and the
  * phrase layer both fill this same box, so their relationship is the
- * same on every screen size and window shape.
+ * same on every screen size and window shape. No frame here: the red
+ * border is only on the text boxes of the services page.
  */
 .gallery {
   position: relative;
@@ -297,21 +303,17 @@ a:hover {
   aspect-ratio: 1 / 1;
   margin: 0 auto;
   container-type: inline-size;
-  border: 2px solid var(--accent);
 }
 
 /*
- * "click here for the portfolio" caption under each slideshow, with a
- * hand-drawn style dashed arrow. The arrow points left-to-right under
- * architecture and right-to-left under photography.
+ * "click above for the portfolio" caption under each slideshow. Plain
+ * text, no arrow: the picture itself is the thing to click.
  */
 .portfolio-cta {
   display: flex;
   align-items: center;
-  gap: 0.8em;
   width: min(100%, 62vh);
-  /* extra top room for the arrow head, which rises above the text line */
-  margin: calc(1.5vh + 0.8em) auto 0;
+  margin: 1.5vh auto 0;
   font-size: clamp(10px, 0.9vw, 14px);
   line-height: 1;
   white-space: nowrap;
@@ -331,40 +333,6 @@ a:hover {
 .portfolio-cta .cta-text {
   text-decoration: none;
   color: var(--fg);
-}
-
-/*
- * Arrow sized from the caption font so it reads as part of the line.
- * The horizontal tail of the arrow sits near the bottom of its box
- * (y 95 of a 38..100 viewBox), so the drawing is lifted a little to
- * bring that tail onto the vertical middle of the caption's letters.
- */
-.portfolio-cta .cta-arrow {
-  display: block;
-  flex: 0 0 auto;
-  height: 2em;
-  width: auto;
-  aspect-ratio: 128 / 62;
-  overflow: visible;
-  transform: translateY(-0.8em);
-}
-
-.portfolio-cta .cta-arrow path {
-  fill: none;
-  stroke: var(--fg);
-  stroke-width: 1.2;
-  stroke-linecap: butt;
-  stroke-linejoin: miter;
-  vector-effect: non-scaling-stroke;
-}
-
-.portfolio-cta .cta-arrow .arrow-shaft {
-  stroke-dasharray: 18 11;
-}
-
-/* Architecture: tail on the left, head pointing right. */
-.cta-arch .cta-arrow {
-  transform: translateY(-0.8em) scaleX(-1);
 }
 
 .gallery img {
@@ -404,7 +372,8 @@ a:hover {
   top: 12vh;
   transform: translate(-50%, -50%);
   margin: 0;
-  font-size: clamp(11px, 2.3vw, 36px);
+  /* 70% of the column-header size (clamp(11px, 2.3vw, 36px)) */
+  font-size: clamp(7.7px, 1.61vw, 25.2px);
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;

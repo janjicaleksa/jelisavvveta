@@ -36,7 +36,7 @@ window.SITE = {
       "visual design",
       "concept development",
       "exhibition design",
-      "urbanistic plans",
+      "urban planning",
     ],
     photography: [
       "studio shooting",
@@ -44,7 +44,7 @@ window.SITE = {
       "special occasions",
       "creative set design",
       "fashion photography",
-      "arch. photography",
+      "architecture photography",
     ],
   },
 
