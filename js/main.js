@@ -8,6 +8,10 @@
   var brand = document.getElementById("brand");
   var labelArch = document.getElementById("label-arch");
   var labelPhoto = document.getElementById("label-photo");
+  var taglineAbove = document.getElementById("tagline-above");
+  var taglineBelow = document.getElementById("tagline-below");
+  var taglinesShown = false;
+  var TAGLINE_FADE_MS = 1500;
   var cursorMark = document.getElementById("cursor-mark");
   var cursorMarkImg = cursorMark.querySelector("img");
   var contactLinks = document.getElementById("contact-links");
@@ -179,6 +183,11 @@
     labelArch.style.opacity = "0";
     labelPhoto.style.opacity = "0";
     cursorMark.style.opacity = "0";
+    taglinesShown = false;
+    taglineAbove.style.transition = "none";
+    taglineBelow.style.transition = "none";
+    taglineAbove.style.opacity = "0";
+    taglineBelow.style.opacity = "0";
 
     var delay = 70;
     order.forEach(function (index) {
@@ -199,9 +208,42 @@
         labelPhoto.style.opacity = "1";
         cursorMark.style.opacity = "1";
         cursorMarkImg.classList.add("is-on");
+        fadeInTaglines();
         setTimeout(resolve, 500);
       }, doneAt);
     });
+  }
+
+  // After the letter blink, the two lines around the name fade in together.
+  function fadeInTaglines() {
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      taglinesShown = true;
+      taglineAbove.style.opacity = "1";
+      taglineBelow.style.opacity = "1";
+      taglineAbove.setAttribute("aria-hidden", "false");
+      taglineBelow.setAttribute("aria-hidden", "false");
+      return;
+    }
+
+    taglineAbove.style.transition = "opacity " + TAGLINE_FADE_MS + "ms ease";
+    taglineBelow.style.transition = "opacity " + TAGLINE_FADE_MS + "ms ease";
+    void taglineAbove.offsetWidth;
+    taglineAbove.style.opacity = "1";
+    taglineBelow.style.opacity = "1";
+    taglineAbove.setAttribute("aria-hidden", "false");
+    taglineBelow.setAttribute("aria-hidden", "false");
+
+    setTimeout(function () {
+      if (!taglinesShown) {
+        taglineAbove.style.transition = "none";
+        taglineBelow.style.transition = "none";
+        taglinesShown = true;
+      }
+      if (introDone) {
+        onScroll();
+      }
+    }, TAGLINE_FADE_MS);
   }
 
   // Puts the overlay straight into its post-intro state (no blinking).
@@ -210,6 +252,7 @@
       letter.style.opacity = "1";
     });
     cursorMarkImg.classList.add("is-on", "is-instant");
+    taglinesShown = true;
   }
 
   function savedScroll() {
@@ -278,11 +321,30 @@
     setShortcut(labelPhoto, enabled);
   }
 
+  function clampFontPx(minRem, vw, maxRem) {
+    var root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    return clamp(minRem * root, (vw / 100) * window.innerWidth, maxRem * root);
+  }
+
+  // Same size as "click above for the portfolio" under the frames.
+  function portfolioCaptionPx() {
+    var text = ctaArch.querySelector(".cta-text");
+    var size = text ? parseFloat(getComputedStyle(text).fontSize) : 0;
+    return size > 0 ? size : clampFontPx(0.5, 1, 0.875);
+  }
+
+  // Distance from a frame edge to the caption, so the column words can
+  // sit just as close on the other side of the box.
+  function frameGapPx() {
+    var gap = parseFloat(getComputedStyle(ctaArch).marginTop);
+    return gap > 0 ? gap : window.innerHeight * 0.015;
+  }
+
   function layoutLabels(progress, servicesFade, contactFade, applyOpacity) {
     var t = smoothstep(progress);
     // Second stage: as the services page arrives the column words slide
-    // from their gallery header position (12vh) to below the text boxes
-    // (93vh); the crosshair stays in the page center.
+    // from just above the gallery frames to just under the text boxes.
+    // The crosshair stays in the page center.
     var s = smoothstep(servicesFade);
     // Third stage: as the contact page arrives the column words and the
     // crosshair travel back to the home arrangement at the bottom of the
@@ -291,9 +353,18 @@
     var c = smoothstep(contactFade);
     var homeLabelTop = 85;
     var homeBrandTop = 50;
-    var servicesLabelTop = 93;
-    var top = lerp(lerp(lerp(homeLabelTop, 12, t), servicesLabelTop, s), homeLabelTop, c);
-    var size = lerp(lerp(1.2, 2.3, t), 1.2, c);
+    var homeLabelPx = clampFontPx(0.6875, 1.2, 2.25);
+    var captionPx = portfolioCaptionPx();
+    var gapPx = frameGapPx();
+    var imageTop = galleryArch.getBoundingClientRect().top - gallerySection.getBoundingClientRect().top;
+    var boxBottom = servicesArch.getBoundingClientRect().bottom - servicesSection.getBoundingClientRect().top;
+    var galleryLabelTop = ((imageTop - gapPx - captionPx / 2) / window.innerHeight) * 100;
+    // Always under the text box: the top of the word clears the frame.
+    var servicesLabelTop = ((boxBottom + gapPx + captionPx / 2) / window.innerHeight) * 100;
+    var top = lerp(lerp(lerp(homeLabelTop, galleryLabelTop, t), servicesLabelTop, s), homeLabelTop, c);
+    // Same small size as the gallery and services pages once the home
+    // page is left behind, including the contact-page links.
+    var sizePx = lerp(homeLabelPx, captionPx, t);
     var brandSize = lerp(4.25, 1.2, t);
     var brandTop = lerp(homeBrandTop, 7, t);
     var homeOpacity = 1 - t;
@@ -303,12 +374,12 @@
     labelPhoto.style.left = "75%";
     labelArch.style.top = top + "vh";
     labelPhoto.style.top = top + "vh";
-    labelArch.style.fontSize = "clamp(11px, " + size + "vw, 36px)";
-    labelPhoto.style.fontSize = "clamp(11px, " + size + "vw, 36px)";
+    labelArch.style.fontSize = sizePx + "px";
+    labelPhoto.style.fontSize = sizePx + "px";
     brand.style.left = "50%";
     brand.style.top = brandTop + "vh";
     brand.style.transform = "translate(-50%, -50%)";
-    brand.style.fontSize = "clamp(11px, " + brandSize + "vw, 66px)";
+    brand.style.fontSize = "clamp(0.6875rem, " + brandSize + "vw, 4.125rem)";
     // Black on the home page, red once it sits at the top of the gallery.
     brand.style.setProperty("--brand-mix", t.toFixed(3));
     contactLabel.style.left = "50%";
@@ -333,7 +404,27 @@
       if (contactLabel.classList.contains("is-link")) {
         contactLabel.style.pointerEvents = homeOpacity > 0.35 ? "auto" : "none";
       }
+      syncTaglineOpacity(homeOpacity);
     }
+  }
+
+  // Home-only. They fade in once after the letter intro, then track the
+  // same opacity as "contact" so they are gone on the later pages.
+  function syncTaglineOpacity(homeOpacity) {
+    if (!taglinesShown) {
+      if (homeOpacity >= 0.98) {
+        return;
+      }
+      taglineAbove.style.transition = "none";
+      taglineBelow.style.transition = "none";
+      taglinesShown = true;
+    }
+    var value = String(homeOpacity);
+    taglineAbove.style.opacity = value;
+    taglineBelow.style.opacity = value;
+    var hidden = homeOpacity < 0.05 ? "true" : "false";
+    taglineAbove.setAttribute("aria-hidden", hidden);
+    taglineBelow.setAttribute("aria-hidden", hidden);
   }
 
   function sectionFade(el) {

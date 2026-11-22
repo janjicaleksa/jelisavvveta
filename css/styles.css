@@ -81,6 +81,32 @@
    */
   --cursor: url("../data/kursor.png") 16 16, auto;
   --cursor-click: url("../data/kursor.png") 16 16, pointer;
+
+  /* Fluid scale — same composition at every width; values shrink gradually. */
+  --pad-page-top: 24vh;
+  --pad-page-bottom: 8vh;
+  --pad-page-x: clamp(0.5rem, 4vw, 4vw);
+  --gap-cols: clamp(0.5rem, 4vw, 4vw);
+  --frame-max: 62vh;
+  --radius-none: 0;
+  --border-frame: 2px;
+
+  --fs-brand: clamp(0.875rem, 4.25vw, 4.125rem);
+  --fs-brand-gallery: clamp(0.6875rem, 1.2vw, 4.125rem);
+  --fs-column: clamp(0.6875rem, 1.2vw, 2.25rem);
+  /* Home-page lines above and below the name. Small, but still readable. */
+  --fs-tagline: clamp(0.625rem, 0.78vw, 0.75rem);
+  --fs-micro: clamp(0.625rem, 0.9vw, 0.875rem);
+  --fs-services-heading: clamp(0.6875rem, 1.61vw, 1.575rem);
+  --fs-contact-heading: clamp(1.125rem, 4.2vw, 5.25rem);
+  /*--fs-contact-heading: clamp(1.125rem, 3.5vw, 4.25rem);*/
+  --fs-contact-term: clamp(0.6875rem, 1.17vw, 1.1375rem);
+  --fs-contact-value: clamp(0.625rem, 0.78vw, 0.8125rem);
+  --size-cursor-mark: clamp(1.5rem, 2.6vw, 2.5rem);
+  --size-contact-photo: min(clamp(3rem, 15vw, 20rem), 24vh);
+  --gap-contact-photo: clamp(0.5rem, 2vw, 2.75rem);
+  --gap-contact-grid: clamp(0.75rem, 4vw, 4vw);
+  --contact-grid-width: min(90vw, 75rem);
 }
 
 html[data-font="helvetica"] {
@@ -89,6 +115,7 @@ html[data-font="helvetica"] {
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 html,
@@ -99,18 +126,26 @@ body {
   font-family: var(--font);
   font-weight: 400;
   min-height: 100%;
+  min-height: 100dvh;
   cursor: var(--cursor);
+  overflow-x: clip;
 }
 
 body.intro-lock {
   overflow: hidden;
   height: 100%;
+  height: 100dvh;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
 }
 
 a {
@@ -126,6 +161,7 @@ a:hover {
 .page {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .overlay {
@@ -138,7 +174,7 @@ a:hover {
   left: 50%;
   top: 15vh;
   transform: translate(-50%, -50%);
-  font-size: clamp(10px, 0.9vw, 14px);
+  font-size: var(--fs-micro);
   font-weight: 400;
   line-height: 1;
   z-index: 20;
@@ -162,7 +198,7 @@ a:hover {
   top: 50%;
   transform: translate(-50%, -50%);
   margin: 0;
-  font-size: clamp(14px, 4.25vw, 66px);
+  font-size: var(--fs-brand);
   font-weight: 400;
   letter-spacing: 0.01em;
   white-space: nowrap;
@@ -194,6 +230,41 @@ a:hover {
 
 #brand .letter.blink-in {
   animation: blink-in 0.38s steps(2, end) forwards;
+}
+
+/*
+ * Two lines around the home-page name, in the same face as
+ * "jelisavvveta" and the site red. They stay on the home position
+ * (main.js fades them out once the name leaves for the gallery).
+ * The offsets match the home size main.js gives the name:
+ * clamp(0.6875rem, 4.25vw, 4.125rem), centered at 50vh.
+ */
+.brand-tagline {
+  position: fixed;
+  left: 50%;
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--fs-tagline);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  font-style: italic;
+  white-space: nowrap;
+  text-align: center;
+  color: var(--accent);
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#tagline-above {
+  top: calc(50vh - clamp(0.6875rem, 4.25vw, 4.125rem) / 2 - clamp(0.55rem, 1.35vh, 1.05rem));
+  transform: translate(-50%, -100%);
+}
+
+#tagline-below {
+  top: calc(50vh + clamp(0.6875rem, 4.25vw, 4.125rem) / 2 + clamp(0.55rem, 1.35vh, 1.05rem));
+  transform: translate(-50%, 0);
 }
 
 @keyframes blink-in {
@@ -241,7 +312,7 @@ a:hover {
   left: 50%;
   top: 85vh;
   transform: translate(-50%, -50%);
-  width: clamp(24px, 2.6vw, 40px);
+  width: var(--size-cursor-mark);
   aspect-ratio: 1 / 1;
   z-index: 20;
   opacity: 0;
@@ -252,6 +323,7 @@ a:hover {
   display: block;
   width: 100%;
   height: 100%;
+  max-width: none;
   opacity: 0;
 }
 
@@ -278,16 +350,20 @@ a:hover {
 }
 
 .columns {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   width: 100%;
   min-height: 100vh;
-  padding: 24vh 4vw 8vh;
-  gap: 4vw;
+  min-height: 100dvh;
+  padding: var(--pad-page-top) var(--pad-page-x) var(--pad-page-bottom);
+  gap: var(--gap-cols);
 }
 
 .col {
-  flex: 1 1 50%;
   min-width: 0;
+  /* Lets the portfolio caption (and any other col children) size with cqw. */
+  container-type: inline-size;
+  container-name: col;
 }
 
 /*
@@ -299,38 +375,35 @@ a:hover {
  */
 .gallery {
   position: relative;
-  width: min(100%, 62vh);
+  width: min(100%, var(--frame-max));
   aspect-ratio: 1 / 1;
   margin: 0 auto;
   container-type: inline-size;
 }
 
 /*
- * "click above for the portfolio" caption under each slideshow. Plain
- * text, no arrow: the picture itself is the thing to click.
+ * "click above for the portfolio" caption under each slideshow, centered
+ * on that image box. Plain text, no arrow: the picture itself is the
+ * thing to click. The box is the same width as the frame above it.
  */
 .portfolio-cta {
   display: flex;
   align-items: center;
-  width: min(100%, 62vh);
+  justify-content: center;
+  width: min(100%, var(--frame-max));
   margin: 1.5vh auto 0;
-  font-size: clamp(10px, 0.9vw, 14px);
+  container-type: inline-size;
+  container-name: cta;
   line-height: 1;
   white-space: nowrap;
+  text-align: center;
   color: var(--fg);
   cursor: var(--cursor-click);
 }
 
-/* Architecture caption hugs the left edge, photography the right edge. */
-.cta-arch {
-  justify-content: flex-start;
-}
-
-.cta-photo {
-  justify-content: flex-end;
-}
-
 .portfolio-cta .cta-text {
+  /* Child queries the CTA frame width (not the wider column) via cqw. */
+  font-size: clamp(0.5rem, 5.2cqw, 0.875rem);
   text-decoration: none;
   color: var(--fg);
 }
@@ -341,6 +414,7 @@ a:hover {
   z-index: 1;
   width: 100%;
   height: 100%;
+  max-width: none;
   object-fit: contain;
   opacity: 0;
   transition: opacity 0.15s ease;
@@ -372,8 +446,8 @@ a:hover {
   top: 12vh;
   transform: translate(-50%, -50%);
   margin: 0;
-  /* 70% of the column-header size (clamp(11px, 2.3vw, 36px)) */
-  font-size: clamp(7.7px, 1.61vw, 25.2px);
+  /* ~70% of the gallery column-header size, with a readable mobile floor */
+  font-size: var(--fs-services-heading);
   font-weight: 400;
   line-height: 1;
   white-space: nowrap;
@@ -383,18 +457,18 @@ a:hover {
 
 /* Same padding as the gallery page so the boxes sit in the same place. */
 .services-columns {
-  padding: 24vh 4vw 8vh;
+  padding: var(--pad-page-top) var(--pad-page-x) var(--pad-page-bottom);
 }
 
 .services-list {
   position: relative;
-  width: min(100%, 62vh);
+  width: min(100%, var(--frame-max));
   aspect-ratio: 1 / 1;
   margin: 0 auto;
   padding: 0;
   list-style: none;
   container-type: inline-size;
-  border: 2px solid var(--accent);
+  border: var(--border-frame) solid var(--accent);
   display: flex;
   flex-direction: column;
   /* compact block, centered vertically in the square */
@@ -413,9 +487,9 @@ a:hover {
 .services-list li.phrase {
   display: block;
   width: 100%;
-  padding: 0 12cqw;
+  padding: 0 clamp(0.2rem, 6cqw, 12cqw);
   font-family: var(--font-century-gothic);
-  font-size: 4.2cqw;
+  font-size: clamp(0.625rem, 4.2cqw, 1.75rem);
   line-height: 1.2;
   white-space: nowrap;
   text-transform: lowercase;
@@ -436,7 +510,7 @@ a:hover {
   width: 100%;
   height: 0;
   margin: 1.1cqw 0;
-  padding: 0 12cqw;
+  padding: 0 clamp(0.2rem, 6cqw, 12cqw);
   font-size: 0;
   line-height: 0;
   user-select: none;
@@ -495,13 +569,14 @@ html[data-highlight="dim"] .services-list li:not(.is-current):not(.sep) {
   top: 33vh;
   transform: translate(-50%, -50%);
   white-space: nowrap;
+  max-width: 92vw;
 }
 
 /* "Let's get in touch!" — Blackest Medium (weight 500 matches the @font-face). */
 #contact-heading {
   margin: 0;
   font-family: var(--font-blackest);
-  font-size: clamp(14px, 2.5vw, 42px);
+  font-size: var(--fs-contact-heading);
   font-weight: 500;
   line-height: 1.1;
   text-align: center;
@@ -513,10 +588,12 @@ html[data-highlight="dim"] .services-list li:not(.is-current):not(.sep) {
   top: 59vh;
   transform: translate(-50%, -50%);
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4vw;
-  width: min(90vw, 1200px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--gap-contact-grid);
+  width: var(--contact-grid-width);
   text-align: center;
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
 }
 
 .contact-item {
@@ -526,14 +603,14 @@ html[data-highlight="dim"] .services-list li:not(.is-current):not(.sep) {
 .contact-term {
   display: block;
   margin-bottom: 1.2vh;
-  font-size: clamp(11px, 1.17vw, 18.2px);
+  font-size: var(--fs-contact-term);
   font-weight: 700;
   line-height: 1;
 }
 
 .contact-value {
   display: block;
-  font-size: clamp(10px, 0.78vw, 13px);
+  font-size: var(--fs-contact-value);
   font-weight: 400;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -554,9 +631,9 @@ html[data-highlight="dim"] .services-list li:not(.is-current):not(.sep) {
   /* directly left of the centered heading */
   right: 100%;
   top: 50%;
-  margin: 0 clamp(14px, 2.5vw, 44px) 0 0;
-  /* vh cap keeps the square clear of the name above and the columns below */
-  width: min(clamp(100px, 18vw, 320px), 26vh);
+  margin: 0 var(--gap-contact-photo) 0 0;
+  /* scales with the viewport so the heading stays centered without clipping */
+  width: var(--size-contact-photo);
   aspect-ratio: 1 / 1;
   opacity: 0;
   /* starts small and turned, then spins up into place */
@@ -575,6 +652,7 @@ html[data-highlight="dim"] .services-list li:not(.is-current):not(.sep) {
   display: block;
   width: 100%;
   height: 100%;
+  max-width: none;
   /* the picture carries its own lace frame, so show all of it */
   object-fit: contain;
 }
