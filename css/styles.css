@@ -97,7 +97,13 @@
   /* Home-page lines above and below the name. Small, but still readable. */
   --fs-tagline: clamp(0.625rem, 0.78vw, 0.75rem);
   --fs-micro: clamp(0.625rem, 0.9vw, 0.875rem);
-  --fs-services-heading: clamp(0.6875rem, 1.61vw, 1.575rem);
+  /*
+   * Same size as the phrases in the red boxes. Those use 4.2cqw of a
+   * square that is min(column width, 62vh). Each column is 44vw once
+   * the page padding and the gap (4vw each) are taken out, so 4.2% of
+   * that square is min(1.848vw, 2.604vh).
+   */
+  --fs-services-heading: clamp(0.625rem, min(1.848vw, 2.604vh), 1.75rem);
   --fs-contact-heading: clamp(1.125rem, 4.2vw, 5.25rem);
   /*--fs-contact-heading: clamp(1.125rem, 3.5vw, 4.25rem);*/
   --fs-contact-term: clamp(0.6875rem, 1.17vw, 1.1375rem);
@@ -443,10 +449,10 @@ a:hover {
 .services-heading {
   position: absolute;
   left: 50%;
-  top: 12vh;
-  transform: translate(-50%, -50%);
+  /* Boxes begin at --pad-page-top; hang the line just above that edge. */
+  top: var(--pad-page-top);
+  transform: translate(-50%, calc(-100% - clamp(0.35rem, 1.6vh, 1.1rem)));
   margin: 0;
-  /* ~70% of the gallery column-header size, with a readable mobile floor */
   font-size: var(--fs-services-heading);
   font-weight: 400;
   line-height: 1;
