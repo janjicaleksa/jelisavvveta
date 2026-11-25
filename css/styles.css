@@ -244,6 +244,8 @@ a:hover {
  * (main.js fades them out once the name leaves for the gallery).
  * The offsets match the home size main.js gives the name:
  * clamp(0.6875rem, 4.25vw, 4.125rem), centered at 50vh.
+ * The extra 4.2vh sets each line out in the open space, on the
+ * bands above and below the name.
  */
 .brand-tagline {
   position: fixed;
@@ -264,12 +266,12 @@ a:hover {
 }
 
 #tagline-above {
-  top: calc(50vh - clamp(0.6875rem, 4.25vw, 4.125rem) / 2 - clamp(0.55rem, 1.35vh, 1.05rem));
+  top: calc(50vh - clamp(0.6875rem, 4.25vw, 4.125rem) / 2 - clamp(0.55rem, 1.35vh, 1.05rem) - 4.2vh);
   transform: translate(-50%, -100%);
 }
 
 #tagline-below {
-  top: calc(50vh + clamp(0.6875rem, 4.25vw, 4.125rem) / 2 + clamp(0.55rem, 1.35vh, 1.05rem));
+  top: calc(50vh + clamp(0.6875rem, 4.25vw, 4.125rem) / 2 + clamp(0.55rem, 1.35vh, 1.05rem) + 4.2vh);
   transform: translate(-50%, 0);
 }
 
@@ -449,9 +451,10 @@ a:hover {
 .services-heading {
   position: absolute;
   left: 50%;
-  /* Boxes begin at --pad-page-top; hang the line just above that edge. */
+  /* Boxes begin at --pad-page-top. Hang the line above that edge,
+     plus 4vh so it sits in the open band under the name. */
   top: var(--pad-page-top);
-  transform: translate(-50%, calc(-100% - clamp(0.35rem, 1.6vh, 1.1rem)));
+  transform: translate(-50%, calc(-100% - clamp(0.35rem, 1.6vh, 1.1rem) - 4vh));
   margin: 0;
   font-size: var(--fs-services-heading);
   font-weight: 400;
